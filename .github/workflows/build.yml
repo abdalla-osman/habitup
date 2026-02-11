@@ -1,4 +1,4 @@
-name: Build Android APK
+name: Build APK
 
 on:
   push:
@@ -7,36 +7,40 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-android:
+  build-apk:
     runs-on: ubuntu-latest
 
     steps:
+      # 1. سحب الكود من الريبو
       - name: Checkout repo
-      - uses: actions/upload-artifact@v4
+        uses: actions/checkout@v3
 
+      # 2. تثبيت Node 18
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
           node-version: 18
 
+      # 3. تثبيت dependencies
       - name: Install dependencies
         run: npm ci
 
+      # 4. تثبيت EAS CLI
       - name: Install EAS CLI
-        run: npm install -g eas-cli@latest
+        run: npm install -g eas-cli@3.34.1
 
-      - name: Login to EAS
-        run: eas login --non-interactive --token ${{ secrets.EXPO_TOKEN }}
+      # 5. تسجيل الدخول باستخدام EXPO_TOKEN
+      - name: EAS Login
+        run: eas login --token ${{ secrets.EXPO_TOKEN }}
 
-      - name: Configure EAS
-        run: eas build:configure
-
+      # 6. تشغيل build للـ APK
       - name: Build APK
-        run: eas build --platform android --non-interactive --profile production
+        run: eas build -p android --non-interactive --profile production
 
-      - name: Upload APK artifact
-        uses: actions/upload-artifact@v3
+      # 7. رفع APK كـ artifact لتقدر تحمله
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
         with:
-          name: android-apk
+          name: app-release
           path: |
-            ./build/**/*.apk
+            **/*.apk
