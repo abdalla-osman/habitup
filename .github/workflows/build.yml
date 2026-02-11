@@ -4,29 +4,39 @@ on:
   push:
     branches:
       - main
+  workflow_dispatch:
 
 jobs:
-  build:
+  build-android:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout repo
         uses: actions/checkout@v3
 
-      - name: Setup Node.js
+      - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '18'
+          node-version: 18
 
-      - name: Install npm dependencies
-        run: npm install
+      - name: Install dependencies
+        run: npm ci
 
       - name: Install EAS CLI
-        run: npm install -g eas-cli
+        run: npm install -g eas-cli@latest
 
-      - name: Login to Expo
+      - name: Login to EAS
         run: eas login --non-interactive --token ${{ secrets.EXPO_TOKEN }}
 
-      - name: Build Android APK
+      - name: Configure EAS
+        run: eas build:configure
+
+      - name: Build APK
         run: eas build --platform android --non-interactive --profile production
 
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: android-apk
+          path: |
+            ./build/**/*.apk
