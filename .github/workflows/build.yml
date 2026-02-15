@@ -11,22 +11,40 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # نسخ ملفات المشروع
       - name: Checkout repo
         uses: actions/checkout@v4
 
+      # تثبيت Node.js 18 مع cache للحزم
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 18
           cache: 'npm'
 
+      # تثبيت الحزم مع تجاهل peer dependency conflicts
       - name: Install dependencies
-        run: npm install
+        run: npm install --legacy-peer-deps
 
+      # تثبيت نسخة محددة من EAS CLI (مطابقة للمشروع)
       - name: Install EAS CLI
-        run: npm install -g eas-cli
+        run: npm install -g eas-cli@16.32.0
 
+      # تسجيل الدخول لـ Expo باستخدام الـ EXPO_TOKEN
+      - name: Login to Expo
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: eas login --non-interactive
+
+      # تشغيل build للـ Android APK
       - name: Build Android (EAS)
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
         run: eas build --platform android --profile production --non-interactive
+
+      # رفع الـ APK كـ artifact لتحميله من GitHub
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-apk
+          path: ./build/android/**/*.apk
